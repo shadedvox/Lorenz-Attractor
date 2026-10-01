@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<style>
+    body {margin: 0 ; background-color:black}
+    canvas {width : 100vw ; height : 100vh ; display:block ; touch-action: none}
+</style>
+<canvas id="la"></canvas>
+<script>
+    const ctx = la.getContext("2d");
+    let w,h,a;
+    function resize() {
+        const d = window.devicePixelRatio || 1;
+        w = Math.round(d*innerWidth);
+        h = Math.round(d*innerHeight);
+        la.width = w;
+        la.height = h;
+        a = Math.min(w/70, h/60);
+    }
+    resize();
+    onresize = resize;
+
+    la.onpointerdown = e => {
+        drag = true;
+        lx = e.clientX;
+        ly = e.clientY;
+        la.setPointerCapture(e.pointerId);
+    };
+    la.onpointermove = e => {
+        if (!drag) return;
+        th += 0.005*(e.clientX-lx);
+        ph += 0.005*(e.clientY-ly);
+        ph = Math.max(-1.5, Math.min(1.5, ph));
+        lx = e.clientX;
+        ly = e.clientY;
+    };
+    la.onpointerup = la.onpointercancel = () => {drag = false;};
+    const b = 8/3;
+    const s = 10;
+    const r = 28;
+    const dt = 0.005;
+    let x = 1;
+    let y = 1;
+    let z = 1;
+    const zc = 27;
+    let th = 0, ph = 0, drag = false, lx, ly;   
+    const D = 120;
+    const N = 4000;
+    let n = 0;
+    const X = new Float32Array(N);
+    const Y = new Float32Array(N);
+    const Z = new Float32Array(N);
+    function step() {
+        for (let i = 0; i < 20; i++) {
+            n += 1;
+            const dx = s*(y - x);
+            const dy = x*(r - z) - y;
+            const dz = x*y - b*z;
+            x += dx * dt;
+            y += dy * dt;
+            z += dz * dt;
+            X[n%N] = x;
+            Y[n%N] = y;
+            Z[n%N] = z;
+        }
+    }
+    function draw() {
+        let px, py;
+        const co = Math.min(n,N);
+        const cs = Math.cos(th), sn = Math.sin(th);
+        const cp = Math.cos(ph), sp = Math.sin(ph);
+        ctx.clearRect(0,0,w,h);
+        ctx.lineCap = "round";
+        for (let k=0; k<co; k++) {
+            const i = (n-k+N)%N;
+            const xr = X[i]*cs - Y[i]*sn;
+            const yr = X[i]*sn + Y[i]*cs;
+            const zr = Z[i] - zc;
+            const dp = yr*cp - zr*sp;
+            const up = yr*sp + zr*cp;
+            const f = D/(D+dp);
+            const sh = Math.max(0, Math.min(1, (f-0.75)/0.65));
+            const sx = a*xr*f+w/2;
+            const sy = h/2-a*up*f;
+            if (k > 0) {
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(sx, sy);
+                ctx.lineWidth = 2*devicePixelRatio*f;
+                ctx.strokeStyle = `hsl(${360*(X[i]+30)/60}, 100%, ${40+20*sh}%)`;
+                ctx.globalAlpha = (1-k/co)*(0.6+0.5*sh);
+                ctx.stroke();
+            }
+            px = sx;
+            py = sy;
+        }
+        ctx.globalAlpha = 1;
+    }
+    function frame(){
+        step();
+        if (!drag) th += 0.01;
+        draw();
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+</script>
