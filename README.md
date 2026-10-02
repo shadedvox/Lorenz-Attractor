@@ -49,3 +49,8 @@ For each point $(x, y, z)$:
 - **Hue:** Follows the point's $x$-value.
 - **Alpha:** Decreases linearly with the age of the point segment.
 - **Visual depth cues:** Lightness, alpha, and line width scale with the perspective factor $f$, rendering nearer segments brighter and thicker.
+
+---
+
+*© 2026 Atharva Chauhan, Vox*
+
